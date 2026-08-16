@@ -1,5 +1,5 @@
 # Use Node for both build and serve
-FROM node:18-alpine
+FROM node:22-alpine
 
 WORKDIR /app
 

@@ -1,6 +1,6 @@
-version: "3.9"
 services:
   frontend:
+    container_name: frontend
     build: ./Frontend
     ports:
       - "5173:5173"
@@ -19,9 +19,9 @@ services:
     environment:
       - ASPNETCORE_URLS=http://+:8080
       - ConnectionStrings__Database=Host=postgres;Port=5432;Database=Task4Db;Username=postgres;Password=postgres
-      - Jwt_Key=wefr-34pto-34r0to3-t3i4-r0o-30to-5it-34r0o34t0yio4[gr]
-      - Jwt_Issuer=Task4.net
-      - Jwt_Audience=Task4.net
+      - Jwt__Key=wefr-34pto-34r0to3-t3i4-r0o-30to-5it-34r0o34t0yio4[gr]
+      - Jwt__Issuer=Task4.net
+      - Jwt__Audience=Task4.net
     depends_on:
       - postgres
   postgres:
