@@ -7,7 +7,6 @@ using WebApi.Services;
 
 namespace WebApi.Controllers
 {
-    [ApiController]
     [Route("api/[controller]")]
     public class AuthController: ControllerBase
     {
@@ -26,10 +25,10 @@ namespace WebApi.Controllers
             var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == loginDto.Email);
             if(user is null || !BCrypt.Net.BCrypt.Verify(loginDto.Password, user.PasswordHash))
             {
-                return BadRequest("Invalid email or password");
+                return BadRequest(new { Message = "Invalid email or password" });
             }
             if (user.Status == UserStatus.Blocked)
-                return BadRequest("User is blocked");
+                return BadRequest(new { Message = "User is blocked" });
 
             user.LastLogin = DateTime.UtcNow;
             await _context.SaveChangesAsync();
@@ -43,7 +42,7 @@ namespace WebApi.Controllers
         {
             if(await _context.Users.AnyAsync(u => u.Email == registerDto.Email))
             {
-                return BadRequest("Email already exists");
+                return BadRequest(new { Message = "Email already exists" });
             }
 
             User user = new User
@@ -51,6 +50,7 @@ namespace WebApi.Controllers
                 Email = registerDto.Email,
                 Name = registerDto.Name,
                 PasswordHash = BCrypt.Net.BCrypt.HashPassword(registerDto.Password),
+                LastLogin = DateTime.UtcNow,
                 Status = UserStatus.Active
             };
 

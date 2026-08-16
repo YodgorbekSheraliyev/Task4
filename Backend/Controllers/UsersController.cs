@@ -19,7 +19,7 @@ namespace WebApi.Controllers
             _context = context;
         }
 
-        [HttpGet("users")]
+        [HttpGet("all")]
         public async Task<IActionResult> GetAllUsers()
         {
             var users = await _context.Users.AsNoTracking().ToListAsync();
@@ -54,10 +54,10 @@ namespace WebApi.Controllers
             return Ok(user);
         }
 
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteUser(string id)
+        [HttpDelete("delete/{id:int}")]
+        public async Task<IActionResult> DeleteUser(int id)
         {
-            var user = await _context.Users.FindAsync(id);
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == id);
             if (user == null)
             {
                 return NotFound();
