@@ -1,0 +1,41 @@
+version: "3.9"
+services:
+  frontend:
+    build: ./Frontend
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./Frontend:/app
+      - /app/node_modules
+    depends_on:
+      - backend
+    environment:
+      - VITE_API_URL=http://localhost:8080/api
+  backend:
+    build: ./backend
+    ports:
+      - "8080:8080"
+      - "8081:8081"
+    environment:
+      - ASPNETCORE_URLS=http://+:8080
+      - ConnectionStrings__Database=Host=postgres;Port=5432;Database=Task4Db;Username=postgres;Password=postgres
+      - Jwt_Key=wefr-34pto-34r0to3-t3i4-r0o-30to-5it-34r0o34t0yio4[gr]
+      - Jwt_Issuer=Task4.net
+      - Jwt_Audience=Task4.net
+    depends_on:
+      - postgres
+  postgres:
+    image: postgres:15-alpine
+    restart: always
+    environment:
+      - POSTGRES_DB=Task4Db
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+volumes:
+  postgres_data:
+
