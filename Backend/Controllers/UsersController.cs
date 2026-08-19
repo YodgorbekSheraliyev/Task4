@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
 using WebApi.Data;
 using WebApi.Dtos;
 using WebApi.Models;
@@ -35,6 +36,12 @@ namespace WebApi.Controllers
                 return NotFound();
             }
 
+            var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (currentUserId != null && user.Id.ToString() == currentUserId)
+            {
+                return BadRequest(new { message = "You cannot block your own account." });
+            }
+
             user.Status = UserStatus.Blocked;
             await _context.SaveChangesAsync();
             return Ok(user);
@@ -49,6 +56,12 @@ namespace WebApi.Controllers
                 return NotFound();
             }
 
+            var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (currentUserId != null && user.Id.ToString() == currentUserId)
+            {
+                return BadRequest(new { message = "You cannot unblock your own account." });
+            }
+
             user.Status = UserStatus.Active;
             await _context.SaveChangesAsync();
             return Ok(user);
@@ -61,6 +74,12 @@ namespace WebApi.Controllers
             if (user == null)
             {
                 return NotFound();
+            }
+
+            var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (currentUserId != null && user.Id.ToString() == currentUserId)
+            {
+                return BadRequest(new { message = "You cannot delete your own account." });
             }
 
             _context.Users.Remove(user);
