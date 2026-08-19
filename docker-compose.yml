@@ -19,6 +19,10 @@ services:
       Jwt__Key: ${JWT_KEY}
       Jwt__Issuer: ${JWT_ISSUER}
       Jwt__Audience: ${JWT_AUDIENCE}
+      Mail: ${MAIL}
+      MailPassword: ${MAIL_PASSWORD}
+      ServerIp: ${SERVER_IP}
+      ServerPort: ${SERVER_PORT}
     depends_on:
       postgres:
         condition: service_healthy
