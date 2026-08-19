@@ -5,6 +5,7 @@ using System.Security.Claims;
 using WebApi.Data;
 using WebApi.Dtos;
 using WebApi.Models;
+using WebApi.Services;
 
 namespace WebApi.Controllers
 {
@@ -14,10 +15,12 @@ namespace WebApi.Controllers
     public class UsersController : ControllerBase
     {
         private readonly AppDbContext _context;
+        private readonly EmailService _emailService;
 
-        public UsersController(AppDbContext context)
+        public UsersController(AppDbContext context, EmailService emailService)
         {
             _context = context;
+            _emailService = emailService;
         }
 
         [HttpGet("all")]
@@ -34,12 +37,6 @@ namespace WebApi.Controllers
             if (user == null)
             {
                 return NotFound();
-            }
-
-            var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (currentUserId != null && user.Id.ToString() == currentUserId)
-            {
-                return BadRequest(new { message = "You cannot block your own account." });
             }
 
             user.Status = UserStatus.Blocked;
@@ -86,6 +83,46 @@ namespace WebApi.Controllers
             await _context.SaveChangesAsync();
 
             return Ok(user);
+        }
+
+
+        [AllowAnonymous]
+        [HttpGet("verify-email")]
+        public async Task<IActionResult> VerifyEmail([FromQuery] string token)
+        {
+            var user = await _context.Users
+                .FirstOrDefaultAsync(u => u.EmailVerificationToken == token);
+
+            if (user == null)
+            {
+                return BadRequest(new
+                {
+                    message = "Invalid verification link."
+                });
+            }
+
+            if (user.EmailVerificationTokenExpiresAt < DateTime.UtcNow)
+            {
+                return BadRequest(new
+                {
+                    message = "Verification link has expired."
+                });
+            }
+
+            if (user.Status == UserStatus.Unverified)
+            {
+                user.Status = UserStatus.Active;
+
+                user.EmailVerificationToken = null;
+                user.EmailVerificationTokenExpiresAt = null;
+
+                await _context.SaveChangesAsync();
+            }
+
+            return Ok(new
+            {
+                message = "Email verified successfully."
+            });
         }
     }
 }

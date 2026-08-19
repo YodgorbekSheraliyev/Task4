@@ -7,6 +7,7 @@ using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using WebApi.Data;
 using WebApi.Dtos;
+using WebApi.Middleware;
 using WebApi.Services;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -18,6 +19,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 });
 
 builder.Services.AddScoped<AuthService>();
+builder.Services.AddScoped<EmailService>();
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer(options =>
 {
@@ -52,7 +54,8 @@ app.UseCors(builder => builder
     .AllowAnyHeader()
     );
 //app.UseHttpsRedirection();
-
+app.UseAuthentication();
+app.UseMiddleware<UserStatusMiddleware>();
 app.UseAuthorization();
 
 app.MapControllers();
