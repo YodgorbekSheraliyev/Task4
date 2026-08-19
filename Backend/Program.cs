@@ -60,4 +60,6 @@ app.UseAuthorization();
 
 app.MapControllers();
 
+app.MapGet("health", () => "healthy");
+
 app.Run();
