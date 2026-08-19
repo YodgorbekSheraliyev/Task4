@@ -7,13 +7,16 @@
         public string Email { get; set; }
         public string PasswordHash { get; set; }
         public DateTime LastLogin { get; set; }
-        public UserStatus Status { get; set; } = UserStatus.Active;
+        public UserStatus Status { get; set; } = UserStatus.Unverified;
+        public string? EmailVerificationToken { get; set; }
+        public DateTime? EmailVerificationTokenExpiresAt { get; set; }
     }
 
     public enum UserStatus
     {
         Active,
-        Blocked
+        Blocked,
+        Unverified
     }
 
 }

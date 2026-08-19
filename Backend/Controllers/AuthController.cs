@@ -8,22 +8,26 @@ using WebApi.Services;
 namespace WebApi.Controllers
 {
     [Route("api/[controller]")]
-    public class AuthController: ControllerBase
+    public class AuthController : ControllerBase
     {
         private readonly AppDbContext _context;
         private readonly AuthService _authService;
+        private readonly IConfiguration _configuration;
+        private readonly EmailService _emailService;
 
-        public AuthController(AppDbContext context, AuthService authService)
+        public AuthController(AppDbContext context, AuthService authService, IConfiguration configuration, EmailService emailService)
         {
             _context = context;
             _authService = authService;
+            _configuration = configuration;
+            _emailService = emailService;
         }
 
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginDto loginDto)
         {
             var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == loginDto.Email);
-            if(user is null || !BCrypt.Net.BCrypt.Verify(loginDto.Password, user.PasswordHash))
+            if (user is null || !BCrypt.Net.BCrypt.Verify(loginDto.Password, user.PasswordHash))
             {
                 return BadRequest(new { Message = "Invalid email or password" });
             }
@@ -40,7 +44,7 @@ namespace WebApi.Controllers
         [HttpPost("register")]
         public async Task<IActionResult> Register([FromBody] RegisterDto registerDto)
         {
-            if(await _context.Users.AnyAsync(u => u.Email == registerDto.Email))
+            if (await _context.Users.AnyAsync(u => u.Email == registerDto.Email))
             {
                 return BadRequest(new { Message = "Email already exists" });
             }
@@ -51,13 +55,18 @@ namespace WebApi.Controllers
                 Name = registerDto.Name,
                 PasswordHash = BCrypt.Net.BCrypt.HashPassword(registerDto.Password),
                 LastLogin = DateTime.UtcNow,
-                Status = UserStatus.Active
+                Status = UserStatus.Unverified
             };
 
-            await _context.AddAsync(user);
-                        await _context.SaveChangesAsync();
-            
             var token = _authService.GenerateToken(user);
+            var verificationToken = Guid.NewGuid();
+            var verificationUri = new Uri($"http://{_configuration["ServerIp"]}:{_configuration["ServerPort"]}/api/users/verify-email?token={verificationToken}");
+            user.EmailVerificationToken = verificationToken.ToString();
+            user.EmailVerificationTokenExpiresAt = DateTime.UtcNow.AddHours(2);
+
+            await _context.AddAsync(user);
+            await _context.SaveChangesAsync();
+            await _emailService.SendMail(verificationUri.ToString(), user.Email);
             return Ok(new { Message = "User registered successfully", Token = token });
         }
     }
