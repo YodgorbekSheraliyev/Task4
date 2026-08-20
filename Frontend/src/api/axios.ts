@@ -13,10 +13,27 @@ api.interceptors.request.use((config) => {
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401) {
+    const status = error.response?.status;
+    const message = error.response?.data?.message;
+
+    if (status === 401) {
       localStorage.removeItem("token");
+
+      sessionStorage.setItem(
+        "authMessage",
+        message || "Your email is not verified. Please click link sent to your email",
+      );
+
       window.location.href = "/login";
-      sessionStorage.setItem("authMessage", "Your account has been blocked.");
+    }
+
+    if (status === 403) {
+      sessionStorage.setItem(
+        "authMessage",
+        message || "Your account has been blocked. You can not perform any action",
+      );
+
+      window.location.href = "/login";
     }
 
     return Promise.reject(error);

@@ -30,14 +30,40 @@ public class UserStatusMiddleware
                     .AsNoTracking()
                     .FirstOrDefaultAsync(u => u.Id == id);
 
-                if (user == null || user.Status == UserStatus.Blocked)
+                if (user == null)
                 {
-                    context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+                    context.Response.StatusCode =
+                        StatusCodes.Status401Unauthorized;
 
                     await context.Response.WriteAsJsonAsync(new
                     {
-                        message =
-                        user == null ? "User no longer exists." : "Your account has been blocked."
+                        message = "User no longer exists."
+                    });
+
+                    return;
+                }
+
+                if (user.Status == UserStatus.Unverified)
+                {
+                    context.Response.StatusCode =
+                        StatusCodes.Status401Unauthorized;
+
+                    await context.Response.WriteAsJsonAsync(new
+                    {
+                        message = "Please verify your email address."
+                    });
+
+                    return;
+                }
+
+                if (user.Status == UserStatus.Blocked)
+                {
+                    context.Response.StatusCode =
+                        StatusCodes.Status403Forbidden;
+
+                    await context.Response.WriteAsJsonAsync(new
+                    {
+                        message = "Your account has been blocked."
                     });
 
                     return;
