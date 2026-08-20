@@ -14,11 +14,19 @@ interface User {
 enum UserStatus {
   Active = 0,
   Blocked = 1,
+  Unverified = 2,
 }
 
 const statusLabels: Record<UserStatus, string> = {
   [UserStatus.Active]: "Active",
   [UserStatus.Blocked]: "Blocked",
+  [UserStatus.Unverified]: "Unverified",
+};
+
+const statusClasses: Record<UserStatus, string> = {
+  [UserStatus.Active]: "bg-success",
+  [UserStatus.Blocked]: "bg-danger",
+  [UserStatus.Unverified]: "bg-warning text-dark",
 };
 
 export default function Users() {
@@ -132,19 +140,13 @@ export default function Users() {
                       <td>{u.email}</td>
                       <td>
                         <span
-                          className={`badge ${
-                            u.status === UserStatus.Active
-                              ? "bg-success"
-                              : "bg-danger"
-                          }`}
+                          className={`badge ${statusClasses[u.status]}`}
                         >
                           {statusLabels[u.status]}
                         </span>
                       </td>
                       <td>
-                        {new Date(
-                          u.lastLogin,
-                        ).toLocaleString()}
+                        {new Date(u.lastLogin).toLocaleString()}
                       </td>
                     </tr>
                   ))}
