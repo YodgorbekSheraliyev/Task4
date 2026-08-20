@@ -73,12 +73,6 @@ namespace WebApi.Controllers
                 return NotFound();
             }
 
-            var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (currentUserId != null && user.Id.ToString() == currentUserId)
-            {
-                return BadRequest(new { message = "You cannot delete your own account." });
-            }
-
             _context.Users.Remove(user);
             await _context.SaveChangesAsync();
 
@@ -119,10 +113,7 @@ namespace WebApi.Controllers
                 await _context.SaveChangesAsync();
             }
 
-            return Ok(new
-            {
-                message = "Email verified successfully."
-            });
+            return Ok("Email verified successfully.");
         }
     }
 }
