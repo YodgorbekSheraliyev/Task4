@@ -24,21 +24,48 @@ namespace WebApi.Controllers
         }
 
         [HttpPost("login")]
-        public async Task<IActionResult> Login([FromBody] LoginDto loginDto)
+        public async Task<IActionResult> Login(
+            [FromBody] LoginDto loginDto)
         {
-            var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == loginDto.Email);
-            if (user is null || !BCrypt.Net.BCrypt.Verify(loginDto.Password, user.PasswordHash))
+            var user = await _context.Users
+                .FirstOrDefaultAsync(u => u.Email == loginDto.Email);
+
+            if (user is null ||
+                !BCrypt.Net.BCrypt.Verify(
+                    loginDto.Password,
+                    user.PasswordHash))
             {
-                return BadRequest(new { Message = "Invalid email or password" });
+                return BadRequest(new
+                {
+                    Message = "Invalid email or password"
+                });
             }
+
+            if (user.Status == UserStatus.Unverified)
+            {
+                return Unauthorized(new
+                {
+                    Message = "Please verify your email address before logging in."
+                });
+            }
+
             if (user.Status == UserStatus.Blocked)
-                return BadRequest(new { Message = "User is blocked" });
+            {
+                return StatusCode(StatusCodes.Status403Forbidden, new
+                {
+                    Message = "Your account has been blocked."
+                });
+            }
 
             user.LastLogin = DateTime.UtcNow;
             await _context.SaveChangesAsync();
 
             var token = _authService.GenerateToken(user);
-            return Ok(new { Token = token });
+
+            return Ok(new
+            {
+                Token = token
+            });
         }
 
         [HttpPost("register")]
@@ -46,28 +73,45 @@ namespace WebApi.Controllers
         {
             if (await _context.Users.AnyAsync(u => u.Email == registerDto.Email))
             {
-                return BadRequest(new { Message = "Email already exists" });
+                return BadRequest(new
+                {
+                    Message = "Email already exists"
+                });
             }
+
+            var verificationToken = Guid.NewGuid();
 
             User user = new User
             {
                 Email = registerDto.Email,
                 Name = registerDto.Name,
-                PasswordHash = BCrypt.Net.BCrypt.HashPassword(registerDto.Password),
+                PasswordHash = BCrypt.Net.BCrypt.HashPassword(
+                    registerDto.Password
+                ),
                 LastLogin = DateTime.UtcNow,
-                Status = UserStatus.Unverified
+                Status = UserStatus.Unverified,
+                EmailVerificationToken = verificationToken.ToString(),
+                EmailVerificationTokenExpiresAt =
+                    DateTime.UtcNow.AddHours(2)
             };
-
-            var token = _authService.GenerateToken(user);
-            var verificationToken = Guid.NewGuid();
-            var verificationUri = new Uri($"http://{_configuration["ServerIp"]}:{_configuration["ServerPort"]}/api/users/verify-email?token={verificationToken}");
-            user.EmailVerificationToken = verificationToken.ToString();
-            user.EmailVerificationTokenExpiresAt = DateTime.UtcNow.AddHours(2);
 
             await _context.AddAsync(user);
             await _context.SaveChangesAsync();
-            await _emailService.SendMail(verificationUri.ToString(), user.Email);
-            return Ok(new { Message = "User registered successfully", Token = token });
+
+            var verificationUri = new Uri(
+                $"http://{_configuration["ServerIp"]}:{_configuration["ServerPort"]}" +
+                $"/api/users/verify-email?token={verificationToken}"
+            );
+
+            await _emailService.SendMail(
+                verificationUri.ToString(),
+                user.Email
+            );
+
+            return Ok(new
+            {
+                Message = "Registration successful. Please verify your email address."
+            });
         }
     }
 }

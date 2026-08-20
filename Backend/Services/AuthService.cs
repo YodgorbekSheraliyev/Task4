@@ -9,8 +9,6 @@ namespace WebApi.Services
     public class AuthService
     {
         private readonly IConfiguration _configuration;
-        private readonly object _config;
-
         public AuthService(IConfiguration configuration)
         {
             _configuration = configuration;
@@ -22,7 +20,6 @@ namespace WebApi.Services
             {
             new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
             new Claim(ClaimTypes.Email, user.Email),
-            new Claim("UserStatus", user.Status.ToString())
         };
 
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:Key"]));
