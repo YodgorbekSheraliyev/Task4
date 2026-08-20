@@ -41,13 +41,6 @@ namespace WebApi.Controllers
                 });
             }
 
-            if (user.Status == UserStatus.Unverified)
-            {
-                return Unauthorized(new
-                {
-                    Message = "Please verify your email address before logging in."
-                });
-            }
 
             if (user.Status == UserStatus.Blocked)
             {
@@ -108,9 +101,11 @@ namespace WebApi.Controllers
                 user.Email
             );
 
+            var token = _authService.GenerateToken(user);
+
             return Ok(new
             {
-                Message = "Registration successful. Please verify your email address."
+                Token = token
             });
         }
     }

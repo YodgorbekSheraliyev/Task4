@@ -43,18 +43,6 @@ public class UserStatusMiddleware
                     return;
                 }
 
-                if (user.Status == UserStatus.Unverified)
-                {
-                    context.Response.StatusCode =
-                        StatusCodes.Status401Unauthorized;
-
-                    await context.Response.WriteAsJsonAsync(new
-                    {
-                        message = "Please verify your email address."
-                    });
-
-                    return;
-                }
 
                 if (user.Status == UserStatus.Blocked)
                 {
