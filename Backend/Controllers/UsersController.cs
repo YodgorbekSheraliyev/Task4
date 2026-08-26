@@ -59,7 +59,7 @@ namespace WebApi.Controllers
                 return BadRequest(new { message = "You cannot unblock your own account." });
             }
 
-            user.Status = UserStatus.Active;
+            user.Status = user.EmailVerificationToken == null ? UserStatus.Active : UserStatus.Unverified;
             await _context.SaveChangesAsync();
             return Ok(user);
         }
